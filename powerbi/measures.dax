@@ -1,0 +1,105 @@
+// ============================================================
+// インバウンド観光ダッシュボード ― DAXメジャー集
+// 前提: powerbi/model.md のテーブル構成。
+// L1=宿泊旅行統計調査 / L2=JNTO訪日外客数 / L3=インバウンド消費動向調査
+// ============================================================
+
+// ---------- L1 基本 ----------
+外国人延べ宿泊者数 =
+SUM ( FactNightsAnnual[foreign_nights] )
+
+総延べ宿泊者数 =
+SUM ( FactNightsAnnual[total_nights] )
+
+外国人比率 =
+DIVIDE ( [外国人延べ宿泊者数], [総延べ宿泊者数] )
+
+外国人延べ宿泊者数_月次 =
+SUM ( FactNightsMonthly[foreign_nights] )
+
+// 前年比 (年次ページ用: DimYear の選択年 - 1)
+外国人延べ宿泊者数_前年 =
+CALCULATE ( [外国人延べ宿泊者数], DimYear[year] = SELECTEDVALUE ( DimYear[year] ) - 1 )
+
+外国人延べ宿泊者数_前年比 =
+DIVIDE ( [外国人延べ宿泊者数], [外国人延べ宿泊者数_前年] ) - 1
+
+// 2019年比 (回復率)
+外国人延べ宿泊者数_2019 =
+CALCULATE ( [外国人延べ宿泊者数], DimYear[year] = 2019 )
+
+外国人延べ宿泊者数_2019比 =
+DIVIDE ( [外国人延べ宿泊者数], [外国人延べ宿泊者数_2019] )
+
+// 稼働率 (比率列の平均。SUM禁止)
+客室稼働率 =
+AVERAGE ( FactOccupancyMonthly[occupancy_pct] )
+
+客室稼働率_年次 =
+AVERAGE ( FactOccupancyAnnual[occupancy_pct] )
+
+// ---------- L1 国籍別 (従業者数10人以上の施設ベース) ----------
+国籍別_外国人延べ宿泊者数 =
+SUM ( FactNationalityAnnual[foreign_nights] )
+
+国籍別_構成比 =
+DIVIDE (
+    [国籍別_外国人延べ宿泊者数],
+    CALCULATE ( [国籍別_外国人延べ宿泊者数], ALL ( DimNationality ) )
+)
+
+国籍別_2019比 =
+DIVIDE (
+    [国籍別_外国人延べ宿泊者数],
+    CALCULATE ( [国籍別_外国人延べ宿泊者数], DimYear[year] = 2019 )
+)
+
+// ---------- L1 施設タイプ ----------
+タイプ別_外国人延べ宿泊者数 =
+SUM ( FactNightsTypeAnnual[foreign_nights] )
+
+タイプ別_稼働率 =
+AVERAGE ( FactOccupancyTypeAnnual[occupancy_pct] )
+
+// ---------- L2 JNTO ----------
+訪日外客数 =
+CALCULATE (
+    SUM ( FactArrivalsMonthly[arrivals] ),
+    FactArrivalsMonthly[nationality] = "総数"
+)
+
+訪日外客数_国籍別 =
+CALCULATE (
+    SUM ( FactArrivalsMonthly[arrivals] ),
+    FactArrivalsMonthly[nationality] <> "総数"
+)
+
+// ---------- 派生参考指標 (定義差の注記とセットで表示すること) ----------
+// 延べ泊数 ÷ 人数。宿泊統計の母集団 (宿泊施設利用分) と JNTO の入国者数は
+// 定義が異なるため、消費動向調査の平均泊数とは単純比較できない。
+延べ泊数_対_外客数 =
+DIVIDE ( [外国人延べ宿泊者数], [訪日外客数] )
+
+// ---------- L3 消費動向 (年次3時点のみ) ----------
+旅行消費額_総額_億円 =
+SUM ( FactSpendTotal[total_spend_oku_yen] )
+
+一人当たり消費単価 =
+AVERAGE ( FactSpendPerson[per_person_spend_yen] )
+
+平均泊数_消費調査 =
+AVERAGE ( FactSpendPerson[avg_nights] )
+
+費目別_一人当たり単価 =
+SUM ( FactSpendCategory[per_person_spend_yen] )
+
+// ---------- 月次トレンド ----------
+外国人延べ宿泊者数_YTD =
+TOTALYTD ( [外国人延べ宿泊者数_月次], DimDate[date] )
+
+外国人延べ宿泊者数_前年同期比 =
+VAR cur = [外国人延べ宿泊者数_YTD]
+VAR prev =
+    CALCULATE ( [外国人延べ宿泊者数_YTD], SAMEPERIODLASTYEAR ( DimDate[date] ) )
+RETURN
+    DIVIDE ( cur, prev ) - 1
