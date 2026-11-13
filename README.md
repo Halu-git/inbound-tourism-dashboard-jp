@@ -2,6 +2,8 @@
 
 訪日インバウンドの「人数（arrivals）→ 宿泊（nights）→ 消費（spend）」を、公式統計だけで都道府県別・国籍別に追うダッシュボードのサンプルです。Excel完成品、Power BI設計パック、整形済みCSVを含みます。
 
+解説記事（Zenn）： https://zenn.dev/halu_git/articles/07614fe48a03d4
+
 ## 主な数値（2025年）
 
 - 外国人延べ宿泊者数： 179,922,130人泊（前年比 +9.4%、2019年比 155.6%）／ 外国人比率 27.2%
@@ -14,6 +16,7 @@
 ## 構成
 
 - `excel/inbound_tourism_dashboard.xlsx` ― Excel完成品（12シート、ネイティブグラフ）
+- `excel/inbound_tourism_dashboard_en.xlsx` ― 英語版Excel（数値は日本語版と同一）
 - `powerbi/` ― Power BI設計パック（model.md / measures.dax / pages.md）
 - `data/processed/` ― tidy形式CSV 12ファイル（出典列つき）
 - `scripts/` ― 取得スクリプト（download_sources.py）と整形スクリプト（build_tidy.py）、Excel生成（build_excel.py）
